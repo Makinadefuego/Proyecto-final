@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import cv2
 import torch
+from recortarObjetosEscena import recortar_y_guardar_objetos
 
 
 sys.path.append('MotionEstimation/RAFT/core')
@@ -74,6 +75,12 @@ def segment_movement(flow, threshold=2):
     segment[mask] = 255
     return segment
 
+#Función para usar la mascara de segmentación
+def segmentacion(frame, segmentacion):
+    frame = cv2.bitwise_and(frame, frame, mask=segmentacion)
+    return frame
+
+
 def process_img(img, device):
     return torch.from_numpy(img).permute(2, 0, 1).float()[None].to(device)
 
@@ -134,8 +141,10 @@ def process_video(video_path, model_path, device='cpu'):
         return
 
     i = 0
+    j = 0
     while True:
         i += 1
+        j += 1
         if i % 2 == 0:
             continue
 
@@ -149,12 +158,17 @@ def process_video(video_path, model_path, device='cpu'):
         
         flow_viz = visualize_optical_flow(flow_up_np)
         filtered_flow = filter_optical_flow(flow_up_np)
-        segmented_movement = segment_movement(flow_up_np)
+        mascara = segment_movement(flow_up_np)
+        segmented_movement = segmentacion(frame2, mascara)
+
+        if j == 3:
+            recortar_y_guardar_objetos(frame2, mascara, output_folder="objects")
 
         # Muestra los resultados
         cv2.imshow("Optical Flow", flow_viz)
         cv2.imshow("Filtered Optical Flow", visualize_optical_flow(filtered_flow))
         cv2.imshow("Segmented Movement", segmented_movement)
+        
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

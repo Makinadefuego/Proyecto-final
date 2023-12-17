@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+from recortarObjetosEscena import recortar_y_guardar_objetos
+
+
 
 def calcular_flujo_optico_farneback(prvs, next, farneback_params):
     flow = cv2.calcOpticalFlowFarneback(prvs, next, None, **farneback_params)
@@ -27,31 +30,49 @@ def segmentar_movimiento(magn, umbral):
 
     return segmentacion
 
-# Código principal
-cap = cv2.VideoCapture("Videos/1_low.mp4")
-farneback_params = dict(pyr_scale=0.5, levels=10, winsize=40, iterations=3, poly_n=3, poly_sigma=1.2, flags=0)
-ret, frame = cap.read()
-prvs = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-umbral_magnitud = 2  # Ajustar según sea necesario
+#Función para usar la mascara de segmentación
+def segmentacion(frame, segmentacion):
+    frame = cv2.bitwise_and(frame, frame, mask=segmentacion)
+    return frame
 
-while True:
+if __name__ == '__main__':
+    # Código principal
+    cap = cv2.VideoCapture("Videos/1.mp4")
+    farneback_params = dict(pyr_scale=0.5, levels=10, winsize=40, iterations=3, poly_n=3, poly_sigma=1.2, flags=0)
     ret, frame = cap.read()
-    if not ret:
-        break
+    prvs = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    umbral_magnitud = 2  # Ajustar según sea necesario
+    i = 0
+    j = 0
+    while True:
+        i += 1
+        j += 1
+        ret, frame = cap.read()
+        if not ret:
+            break
 
-    next = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    magn, ang = calcular_flujo_optico_farneback(prvs, next, farneback_params)
-    
-    imagen_flujo = visualizar_flujo_optico(magn, ang)
-    imagen_segmentacion = segmentar_movimiento(magn, umbral_magnitud)
+        if i%2 == 0:
+            continue
 
-    cv2.imshow('Flujo Óptico Denso', imagen_flujo)
-    cv2.imshow('Segmentación de Movimiento', imagen_segmentacion)
+      
+        next = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        magn, ang = calcular_flujo_optico_farneback(prvs, next, farneback_params)
+        
+        imagen_flujo = visualizar_flujo_optico(magn, ang)
+        mascara_segmentacion = segmentar_movimiento(magn, umbral_magnitud)
+        imagen_segmentacion = segmentacion(frame, mascara_segmentacion)
+        
+        if j == 1:
+            recortar_y_guardar_objetos(frame, mascara_segmentacion, output_folder="objects")
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+        cv2.imshow('Flujo Óptico Denso', imagen_flujo)
+        cv2.imshow('Máscara de Segmentación', mascara_segmentacion)
+        cv2.imshow('Segmentación de Movimiento', imagen_segmentacion)
 
-    prvs = next
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-cap.release()
-cv2.destroyAllWindows()
+        prvs = next
+
+    cap.release()
+    cv2.destroyAllWindows()

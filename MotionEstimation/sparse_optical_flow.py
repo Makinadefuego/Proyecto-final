@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from recortarObjetosEscena import recortar_y_guardar_objetos
 
 def calcular_flujo_optico(frame_anterior_gray, frame_actual_gray, puntos_anteriores, lk_params):
     # Calcula el flujo óptico
@@ -21,6 +22,8 @@ def dibujar_lineas(frame, mask, buenos_actuales, buenos_anteriores):
         frame = cv2.circle(frame, (a, b), 5, (0, 0, 255), -1)
 
     return cv2.add(frame, mask)
+
+#Función para sobre
 
 
 if __name__ == '__main__':
