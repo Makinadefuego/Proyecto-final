@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
-from recortarObjetosEscena import recortar_y_guardar_objetos
+import sys
+
 
 
 

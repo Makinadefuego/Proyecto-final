@@ -10,6 +10,8 @@ from skimage.color import rgb2gray
 import csv
 
 def extract_save_sift_features(image_path, output_folder):
+    if image_path == '.DS_Store':
+        return
     # Lee la imagen en escala de grises
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
@@ -22,7 +24,7 @@ def extract_save_sift_features(image_path, output_folder):
     # Guarda los descriptores en un archivo .csv
     with open(os.path.join(output_folder, os.path.basename(image_path) + ".csv"), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, delimiter=',')
-        writer.writerows(sift.descriptors)
+        writer.writerows(sift.descriptors[:, :128])
 
 if __name__ == "__main__":
     # Lista de imágenes a procesar

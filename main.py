@@ -45,7 +45,7 @@ def process_video(video_path, model_path, device='cpu'):
         
         recortar_y_guardar_objetos(frame2, mascara, output_folder="objects")
 
-        if j == 9:
+        if j == 120:
             break
         # Muestra los resultados
         cv2.imshow("Optical Flow", flow_viz)
@@ -62,36 +62,56 @@ def process_video(video_path, model_path, device='cpu'):
     cv2.destroyAllWindows()
 
 # Uso de la función
-video_path = "Videos/4.mp4"
+video_path = "Videos/1_low.mp4"
 model_path = "MotionEstimation/RAFT/models/raft-things.pth"
-process_video(video_path, model_path)
 
 
-#Se extran las caracteristicas
+#Segmentción del video con el algoritmo de RAFT
+#process_video(video_path, model_path)
 
-    # Lista de imágenes a procesar
-images = os.listdir("objects")
 
-    #Se conservan solo las imágenes .jpg
-images = [image for image in images if image.endswith(".png")]
-print(images)
+# # Se extran las caracteristicas
 
-    # Crea la carpeta donde se guardarán los descriptores
-if not os.path.exists("sift_features"):
-    os.mkdir("sift_features")
+#     # Lista de imágenes a procesar
+# images = os.listdir("objects")
 
-for image in os.listdir("objects"):
-    try:
-        # Intenta extraer y guardar las características SIFT
-        extract_save_sift_features(os.path.join("objects", image), "sift_features")
-    except RuntimeError as e:
-        # Si se produce un RuntimeError, verifica si es el error específico
-        if "SIFT found no features" in str(e):
-            print(f"No se encontraron características en {image}, omitiendo...")
-            # Aquí puedes agregar cualquier otra lógica que necesites
-        else:
-            # Si es un RuntimeError diferente, puedes optar por volver a lanzarlo
-            raise
+#     #Se conservan solo las imágenes .jpg
+# images = [image for image in images if image.endswith(".png")]
+# print(images)
 
-mostrar_clusters()
+
+# # #Se convierten las imagenes a escala de grises
+# # for image in images:
+# #     image_path = os.path.join("objects", image)
+# #     image = cv2.imread(image_path)
+# #     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+# #     cv2.imwrite(image_path, gray)
+
+
+#     # Crea la carpeta donde se guardarán los descriptores
+# if not os.path.exists("sift_features"):
+#     os.mkdir("sift_features")
+
+# for image in os.listdir("objects"):
+#     try:
+#         if image == '.DS_Store':
+#             continue
+#         print(f"Procesando {image}...")
+#         # Intenta extraer y guardar las características SIFT
+#         extract_save_sift_features(os.path.join("objects", image), "sift_features")
+#     except RuntimeError as e:
+#         # Si se produce un RuntimeError, verifica si es el error específico
+#         if "SIFT found no features" in str(e):
+#             print(f"No se encontraron características en {image}, omitiendo...")
+#         else:
+
+#             raise
+#     except IndexError as e:
+#         print(f"Error de índice en {image}, omitiendo...")
+
+
+mostrar_clusters("sift_features", 3)
+mostrar_clusters("hu_moments", 3)
+mostrar_clusters("hog_features", 4)
+mostrar_clusters("color_histograms", 4)
 

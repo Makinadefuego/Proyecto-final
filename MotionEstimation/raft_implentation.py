@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import cv2
 import torch
-from recortarObjetosEscena import recortar_y_guardar_objetos
+
 
 
 sys.path.append('MotionEstimation/RAFT/core')
@@ -61,14 +61,14 @@ def visualize_optical_flow(flow):
     return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
 
 # Function to filter optical flow
-def filter_optical_flow(flow, threshold=2):
+def filter_optical_flow(flow, threshold=1):
     mag = np.linalg.norm(flow, axis=2)
     filtered_flow = flow.copy()
     filtered_flow[mag < threshold] = 0
     return filtered_flow
 
 # Function to segment movement
-def segment_movement(flow, threshold=2):
+def segment_movement(flow, threshold=1):
     mag = np.linalg.norm(flow, axis=2)
     mask = mag > threshold
     segment = np.zeros_like(mag, dtype=np.uint8)
@@ -86,7 +86,7 @@ def process_img(img, device):
 
 
 def inference(model, frame1, frame2, device, pad_mode='sintel',
-              iters=12, flow_init=None, upsample=True, test_mode=True):
+              iters=20, flow_init=None, upsample=True, test_mode=True):
 
     model.eval()
     with torch.no_grad():
@@ -126,59 +126,10 @@ import numpy as np
 
 # Asumiendo que todas tus funciones definidas anteriormente están aquí...
 
-def process_video(video_path, model_path, device='cpu'):
-    # Carga el modelo RAFT
-    model = load_model(model_path)
-    model.to(device)
-    model.eval()
 
-    # Abre el video
-    cap = cv2.VideoCapture(video_path)
-    ret, frame1 = cap.read()
-    
-    if not ret:
-        print("No se pudo leer el video.")
-        return
 
-    i = 0
-    j = 0
-    while True:
-        i += 1
-        j += 1
-        if i % 2 == 0:
-            continue
+if __name__ == "__main__":
+    # Uso de la función
+    video_path = "Videos/trimmed_0.mp4"
+    model_path = "MotionEstimation/RAFT/models/raft-things.pth"
 
-        ret, frame2 = cap.read()
-        if not ret:
-            break
-
-        # Calcula el flujo óptico y las visualizaciones
-        flow_low, flow_up = inference(model, frame1, frame2, device, test_mode=True)
-        flow_up_np = flow_up[0].permute(1, 2, 0).cpu().numpy()
-        
-        flow_viz = visualize_optical_flow(flow_up_np)
-        filtered_flow = filter_optical_flow(flow_up_np)
-        mascara = segment_movement(flow_up_np)
-        segmented_movement = segmentacion(frame2, mascara)
-
-        if j == 3:
-            recortar_y_guardar_objetos(frame2, mascara, output_folder="objects")
-
-        # Muestra los resultados
-        cv2.imshow("Optical Flow", flow_viz)
-        cv2.imshow("Filtered Optical Flow", visualize_optical_flow(filtered_flow))
-        cv2.imshow("Segmented Movement", segmented_movement)
-        
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-        frame1 = frame2
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-# Uso de la función
-video_path = "Videos/1_low.mp4"
-model_path = "MotionEstimation/RAFT/models/raft-things.pth"
-process_video(video_path, model_path)
